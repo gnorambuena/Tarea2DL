@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from skimage.transform import resize
 
 url = "http://storage.googleapis.com/quickdraw_dataset/full/numpy_bitmap/"
+path = "data/"
 aux = "aux.npy"
 
 try:
@@ -23,8 +24,7 @@ with open("classes.txt", "r") as file:
     for s in file.readlines():
         print("File: ",k)
         s = s[:-1]
-        wget.download(url + s + ".npy", aux)
-        data = np.load(aux)
+        data = np.load(data+s+".npy")
         data = data[np.random.choice(data.shape[0], 1050, replace=False)]
 
         data = np.array([np.reshape(t, (28, 28)) for t in data])
@@ -38,7 +38,6 @@ with open("classes.txt", "r") as file:
         Xtest = np.concatenate((Xtest, testdata))
         Ytest = np.concatenate((Ytest, np.array([k] * 50)))
 
-        os.remove(aux)
         k += 1
 
 np.save("traindata.npy", Xtrain)
