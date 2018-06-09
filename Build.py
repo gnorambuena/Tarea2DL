@@ -21,6 +21,7 @@ Ytest = np.array([])
 with open("classes.txt", "r") as file:
     k = 0
     for s in file.readlines():
+        print("File: ",k)
         s = s[:-1]
         wget.download(url + s + ".npy", aux)
         data = np.load(aux)

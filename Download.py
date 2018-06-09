@@ -11,6 +11,6 @@ os.makedirs(path)
 with open("classes.txt", "r") as file:
     for en in enumerate(file.readlines()):
         i, s = en
-        print("\nDownloading file: ",i)
+        print("\nDownloading file: ", i)
         s = s[:-1]
         wget.download(url + s + ".npy", path + "/" + s + ".npy")
