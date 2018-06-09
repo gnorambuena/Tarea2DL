@@ -14,10 +14,10 @@ except:
     pass
 
 Xtrain = np.array([])
-Xtrain = np.reshape(Xtrain, (0, 128, 128))
+Xtrain = np.reshape(Xtrain, (0, 28, 28))
 Ytrain = np.array([])
 Xtest = np.array([])
-Xtest = np.reshape(Xtest, (0, 128, 128))
+Xtest = np.reshape(Xtest, (0, 28, 28))
 Ytest = np.array([])
 with open("classes.txt", "r") as file:
     k = 0
