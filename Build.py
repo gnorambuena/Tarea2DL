@@ -24,7 +24,7 @@ with open("classes.txt", "r") as file:
     for s in file.readlines():
         print("File: ",k)
         s = s[:-1]
-        data = np.load(data+s+".npy")
+        data = np.load(path+s+".npy")
         data = data[np.random.choice(data.shape[0], 1050, replace=False)]
 
         data = np.array([np.reshape(t, (28, 28)) for t in data])
