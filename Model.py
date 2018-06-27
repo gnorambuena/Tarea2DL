@@ -17,8 +17,7 @@ with tf.device('/device:GPU:0'):
 	channels = 1
 	classes = 100
 	x = tf.placeholder(tf.float32, shape = [None,img_size,img_size,channels])
-	y_label = tf.placeholder(tf.int64, shape = [None])
-	y = tf.one_hot(y_label, depth = classes, dtype = tf.float32)
+	y = tf.placeholder(tf.float32, shape = [None,classes])
 
 	x_norm = tf.layers.batch_normalization(x,training = True)
 
@@ -38,16 +37,18 @@ with tf.device('/device:GPU:0'):
 	conv4_2 = buildConv2DLayer(conv4_1,256)
 	maxpool4 = buildMaxPool(conv4_2)
 
-	fc_1 = tf.layers.dense(maxpool4,1024,activation = tf.nn.relu,
+	flt = tf.contrib.layers.flatten(maxpool4)
+
+	fc_1 = tf.layers.dense(flt,1024,activation = tf.nn.relu,
 			kernel_initializer = tf.contrib.layers.xavier_initializer())
 	fc_2 = tf.layers.dense(fc_1,100,
 			kernel_initializer = tf.contrib.layers.xavier_initializer())
 
 	y_pred = tf.nn.softmax(fc_2)
-	cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=fc_2, labels=y))
+	cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=fc_2, labels=y))
 
 	learning_rate = 0.03
 	optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
-	correct_prediction = tf.equal(tf.argmax(y_pred, 1), y_label)
+	correct_prediction = tf.equal(tf.argmax(y_pred, 1), tf.argmax(y,1))
 	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))

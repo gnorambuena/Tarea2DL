@@ -5,13 +5,6 @@ from skimage.transform import resize
 
 url = "http://storage.googleapis.com/quickdraw_dataset/full/numpy_bitmap/"
 path = "data/"
-aux = "aux.npy"
-
-try:
-    os.remove(aux)
-except:
-    pass
-
 
 Xtrain = []
 Ytrain = []
@@ -37,10 +30,12 @@ with open("classes.txt", "r") as file:
         Xtest.append(testdata)
         Ytest.append(np.array([k] * 50))
 
-Xtrain = np.concatenate(Xtrain)
+Xtrain = np.concatenate(Xtrain).astype(float)
+Xtrain = Xtrain/255
 Ytrain = np.concatenate(Ytrain)
 
-Xtest = np.concatenate(Xtest)
+Xtest = np.concatenate(Xtest).astype(float)
+Xtest = Xtest/255
 Ytest = np.concatenate(Ytest)
 np.save("traindata.npy", Xtrain)
 np.save("trainlabel.npy", Ytrain)
