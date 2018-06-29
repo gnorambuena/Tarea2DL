@@ -2,3 +2,4 @@ data
 *.npy
 models
 __pycache__
+.idea
