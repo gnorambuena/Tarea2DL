@@ -9,7 +9,12 @@ from binary_file_parser import *
 pathname = "data/"
 train_path = "train/"
 test_path = "test/"
-
+if os.path.isdir(train_path):
+    shutil.rmtree(train_path)
+os.makedirs(train_path)
+if os.path.isdir(test_path):
+    shutil.rmtree(test_path)
+os.makedirs(test_path)
 def render_image(drawing):
     img = np.zeros((256, 256), dtype=np.uint8)
     for tr in drawing:
