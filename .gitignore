@@ -1,4 +1,6 @@
 data
+test
+train
 *.npy
 models
 __pycache__
