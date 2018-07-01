@@ -16,9 +16,9 @@ import tensorflow as tf
 import numpy as np
 
 # Training Parameters
-learning_rate = 0.01
+learning_rate = 0.001
 num_epochs = 1
-batch_size = 18
+batch_size = 30
 
 # Network Parameters
 num_classes = 100 # QUICKDRAW total classes (1-100 weas)
@@ -39,7 +39,7 @@ def conv_net(x_dict, n_classes, reuse, is_training):
     # Define a scope for reusing the variables
     with tf.variable_scope('ConvNet', reuse=reuse):
         # TF Estimator input is a dict, in case of multiple inputs
-        x = x_dict
+        x = x_dict['images']
 
         # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
         # Reshape to match picture format [Height x Width x Channel]
@@ -77,6 +77,7 @@ def conv_net(x_dict, n_classes, reuse, is_training):
 
 # Define the model function (following TF Estimator Template)
 def model_fn(features, labels, mode):
+    tf.logging.set_verbosity(tf.logging.INFO)
     # Build the neural network
     # Because Dropout have different behavior at training and prediction time, we
     # need to create 2 distinct computation graphs that still share the same weights.
@@ -102,15 +103,17 @@ def model_fn(features, labels, mode):
 
     # Evaluate the accuracy of the model00
     acc_op = tf.metrics.accuracy(labels=labels, predictions=pred_classes)
-    print("Accuracy: ",acc_op)
+    #print("Accuracy: ",acc_op)
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
+    logging_hook = tf.train.LoggingTensorHook({"loss" : loss_op}, every_n_iter=1)
     estim_specs = tf.estimator.EstimatorSpec(
         mode=mode,
         predictions=pred_classes,
         loss=loss_op,
         train_op=train_op,
-        eval_metric_ops={'accuracy': acc_op})
+        eval_metric_ops={'accuracy': acc_op},
+        training_hooks = [logging_hook])
 
     return estim_specs
 
@@ -128,15 +131,13 @@ def parse_function(filename, label):
     img = np.load("data/"+filename.decode())
     return img,label
 
-"""
-train_data = np.load("traindata.npy").astype(np.float32)
-train_label = np.load("trainlabel.npy").astype(int)
+train_data = np.load("train/images.npy")
+train_label = np.load("train/labels.npy").astype(int)
 input_fn = tf.estimator.inputs.numpy_input_fn(
     x={'images': train_data}, y=train_label,
     batch_size=batch_size, num_epochs=num_epochs, shuffle=True)
 # Train the Model
-"""
-
+model.train(input_fn)
 def train_input_fn():
 
     train_files = [s[:-1] + str(k).zfill(4) + ".npy" for s \
@@ -153,7 +154,7 @@ def train_input_fn():
     iterator = train_dataset.make_one_shot_iterator() 
     batch_features, batch_labels = iterator.get_next()
     return batch_features, batch_labels 
-model.train(train_input_fn)
+#model.train(train_input_fn)
 
 def test_input_fn():
 
@@ -173,6 +174,11 @@ def test_input_fn():
 
 
 # Use the Estimator 'evaluate' method
-e = model.evaluate(test_input_fn)
-
+#e = model.evaluate(test_input_fn)
+train_data = np.load("test/images.npy")
+train_label = np.load("test/labels.npy").astype(int)
+e_input_fn = tf.estimator.inputs.numpy_input_fn(
+    x={'images': test_data}, y=test_label,
+    batch_size=batch_size, num_epochs=num_epochs, shuffle=True)
+e = model.evaluate(e_input_fn)
 print("Testing Accuracy:", e['accuracy'])
