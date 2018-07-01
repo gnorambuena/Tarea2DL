@@ -175,8 +175,8 @@ def test_input_fn():
 
 # Use the Estimator 'evaluate' method
 #e = model.evaluate(test_input_fn)
-train_data = np.load("test/images.npy")
-train_label = np.load("test/labels.npy").astype(int)
+test_data = np.load("test/images.npy")
+test_label = np.load("test/labels.npy").astype(int)
 e_input_fn = tf.estimator.inputs.numpy_input_fn(
     x={'images': test_data}, y=test_label,
     batch_size=batch_size, num_epochs=num_epochs, shuffle=True)
