@@ -39,7 +39,7 @@ def conv_net(x_dict, n_classes, reuse, is_training):
     # Define a scope for reusing the variables
     with tf.variable_scope('ConvNet', reuse=reuse):
         # TF Estimator input is a dict, in case of multiple inputs
-        x = x_dict['images']
+        x = x_dict['image']
 
         # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
         # Reshape to match picture format [Height x Width x Channel]
@@ -127,58 +127,51 @@ model = tf.estimator.Estimator(model_fn, model_dir = "models/network1", config =
 
 # Define the input function for training
 
-def parse_function(filename, label):
-    img = np.load("data/"+filename.decode())
-    return img,label
+def _parse_function(example_proto):
+    features = {"image": tf.FixedLenFeature((), tf.string, default_value=""),
+        "label": tf.FixedLenFeature((), tf.int64, default_value=0)}
 
-train_data = np.load("test/images.npy")
-train_label = np.load("test/labels.npy").astype(int)
-input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={'images': train_data}, y=train_label,
-    batch_size=batch_size, num_epochs=num_epochs, shuffle=True)
+    parsed_features = tf.parse_single_example(example_proto, features)
+    image = tf.decode_raw(parsed_features['image'], tf.float32)
+    return image, parsed_features["label"]
+
 # Train the Model
-model.train(input_fn)
 def train_input_fn():
 
-    train_files = [s[:-1] + str(k).zfill(4) + ".npy" for s \
+    train_files = ["test/" + s[:-1] + str(k).zfill(4) + ".tfrecord" for s \
         in open("classes.txt","r").readlines() for k in range(1000)]
-    train_labels = [k//1000 for k in range(10**5)]
-    train_dataset = tf.data.Dataset.from_tensor_slices((train_files,train_labels))
-    #train_dataset = train_dataset.map(parse_function)
-    train_dataset = train_dataset.map(
-        lambda filename, label: tuple(tf.py_func(
-            parse_function, [filename, label], [tf.float64, label.dtype])))
+    #train_labels = [k//1000 for k in range(10**5)]
+    train_dataset = tf.data.TFRecordDataset(train_files)
+    
+    train_dataset = train_dataset.map(_parse_function)
     train_dataset = train_dataset.shuffle(10**5)
     train_dataset = train_dataset.batch(batch_size)
     train_dataset = train_dataset.repeat(num_epochs)
     iterator = train_dataset.make_one_shot_iterator() 
     batch_features, batch_labels = iterator.get_next()
-    return batch_features, batch_labels 
-#model.train(train_input_fn)
+    xd = {'image':batch_features,'label':batch_labels}
+    return xd
+model.train(train_input_fn)
 
 def test_input_fn():
 
-    test_files = [s[:-1] + str(k).zfill(4) + ".npy" for s \
-        in open("classes.txt","r").readlines() for k in range(1000,1050)]
-    test_labels = [k//50 for k in range(5000)]
-    test_dataset = tf.data.Dataset.from_tensor_slices((test_files,test_labels))
-    #test_dataset = test_dataset.map(parse_function)
-    test_dataset = test_dataset.map(
-        lambda filename, label: tuple(tf.py_func(
-            parse_function, [filename, label], [tf.float64, label.dtype])))
+    test_files = ["test/" + s[:-1] + str(k).zfill(4) + ".tfrecord" for s \
+        in open("classes.txt","r").readlines() for k in range(1000)]
+    #test_labels = [k//1000 for k in range(10**5)]
+    test_dataset = tf.data.TFRecordDataset(test_files)
     
+    test_dataset = test_dataset.map(_parse_function)
+    test_dataset = test_dataset.shuffle(5*10**4)
     test_dataset = test_dataset.batch(batch_size)
+    test_dataset = test_dataset.repeat(1)
     iterator = test_dataset.make_one_shot_iterator() 
     batch_features, batch_labels = iterator.get_next()
-    return batch_features, batch_labels 
+    xd = {'image':batch_features,'label':batch_labels}
+    return xd 
 
 
 # Use the Estimator 'evaluate' method
 #e = model.evaluate(test_input_fn)
-test_data = np.load("test/images.npy")
-test_label = np.load("test/labels.npy").astype(int)
-e_input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={'images': test_data}, y=test_label,
-    batch_size=batch_size, num_epochs=num_epochs, shuffle=False)
-e = model.evaluate(e_input_fn)
+
+e = model.evaluate(test_input_fn)
 print("Testing Accuracy:", e['accuracy'])
