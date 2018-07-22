@@ -95,6 +95,7 @@ def model_fn(features, labels, mode):
         return tf.estimator.EstimatorSpec(mode, predictions=pred_classes)
 
         # Define loss and optimizer
+    labels = tf.reshape(labels,[-1])
     loss_op = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=logits_train, labels=tf.cast(labels, dtype=tf.int64)))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -102,11 +103,12 @@ def model_fn(features, labels, mode):
                                   global_step=tf.train.get_global_step())
 
     # Evaluate the accuracy of the model00
+    print("asdasd")
     acc_op = tf.metrics.accuracy(labels=labels, predictions=pred_classes)
     #print("Accuracy: ",acc_op)
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
-    logging_hook = tf.train.LoggingTensorHook({"loss" : loss_op}, every_n_iter=100)
+    logging_hook = tf.train.LoggingTensorHook({"loss" : loss_op}, every_n_iter=1)
     estim_specs = tf.estimator.EstimatorSpec(
         mode=mode,
         predictions=pred_classes,
@@ -134,15 +136,15 @@ def _parse_function(serialized_example):
       # Defaults are not specified since both keys are required.
       features={
           'image': tf.FixedLenFeature([], tf.string),
-          'label': tf.FixedLenFeature([], tf.int64),
+          'label': tf.FixedLenFeature([1], tf.int64),
       })
 
-    image = tf.decode_raw(features['image'], tf.int64)
-    image = tf.reshape(image,[1,128,128])
+    image = tf.decode_raw(features['image'], tf.int8)
+    image = tf.reshape(image,[128,128])
 
       # Convert label from a scalar uint8 tensor to an int32 scalar.
     label = tf.cast(features['label'], tf.int32)
-    label = tf.reshape(label,[1])
+    #label = tf.reshape(label,[])
       
     return image, label
 
