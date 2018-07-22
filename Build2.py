@@ -53,7 +53,7 @@ def preprocess(source,classname,label):
             
             # do something with the drawing
             image_resized = render_image(drawing['image']).astype(np.int64).reshape(128*128).tolist()
-            image_tfrecord = tf.train.Feature(int64_list = tf.train.Int64List(value = image_resized))
+            image_tfrecord = tf.train.Feature(int64_list = tf.train.Int64List(value = [image_resized]))
             label_tfrecord = tf.train.Feature(int64_list = tf.train.Int64List(value = [label]))
 
             dict_tfrecord = {

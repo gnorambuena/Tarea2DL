@@ -39,7 +39,7 @@ def conv_net(x_dict, n_classes, reuse, is_training):
     # Define a scope for reusing the variables
     with tf.variable_scope('ConvNet', reuse=reuse):
         # TF Estimator input is a dict, in case of multiple inputs
-        x = x_dict['image']
+        x = x_dict#['image']
 
         # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
         # Reshape to match picture format [Height x Width x Channel]
@@ -127,19 +127,30 @@ model = tf.estimator.Estimator(model_fn, model_dir = "models/network1", config =
 
 # Define the input function for training
 
-def _parse_function(example_proto):
-    features = {"image": tf.FixedLenFeature((), tf.string, default_value=""),
-        "label": tf.FixedLenFeature((), tf.int64, default_value=0)}
+print("WAWDAWD")
+def _parse_function(serialized_example):
+    features = tf.parse_example(
+      [serialized_example],
+      # Defaults are not specified since both keys are required.
+      features={
+          'image': tf.FixedLenFeature([], tf.string),
+          'label': tf.FixedLenFeature([], tf.int64),
+      })
 
-    parsed_features = tf.parse_single_example(example_proto, features)
-    image = tf.decode_raw(parsed_features['image'], tf.float32)
-    return image, parsed_features["label"]
+    image = tf.decode_raw(features['image'], tf.int64)
+    image = tf.reshape(image,[1,128,128])
+
+      # Convert label from a scalar uint8 tensor to an int32 scalar.
+    label = tf.cast(features['label'], tf.int32)
+    label = tf.reshape(label,[1])
+      
+    return image, label
 
 # Train the Model
 def train_input_fn():
 
     train_files = ["test/" + s[:-1] + str(k).zfill(4) + ".tfrecord" for s \
-        in open("classes.txt","r").readlines() for k in range(1000)]
+        in open("classes.txt","r").readlines() for k in range(1000,1050)]
     #train_labels = [k//1000 for k in range(10**5)]
     train_dataset = tf.data.TFRecordDataset(train_files)
     
@@ -149,14 +160,13 @@ def train_input_fn():
     train_dataset = train_dataset.repeat(num_epochs)
     iterator = train_dataset.make_one_shot_iterator() 
     batch_features, batch_labels = iterator.get_next()
-    xd = {'image':batch_features,'label':batch_labels}
-    return xd
+    return batch_features,batch_labels
 model.train(train_input_fn)
 
 def test_input_fn():
 
     test_files = ["test/" + s[:-1] + str(k).zfill(4) + ".tfrecord" for s \
-        in open("classes.txt","r").readlines() for k in range(1000)]
+        in open("classes.txt","r").readlines() for k in range(1000,1050)]
     #test_labels = [k//1000 for k in range(10**5)]
     test_dataset = tf.data.TFRecordDataset(test_files)
     
@@ -166,8 +176,7 @@ def test_input_fn():
     test_dataset = test_dataset.repeat(1)
     iterator = test_dataset.make_one_shot_iterator() 
     batch_features, batch_labels = iterator.get_next()
-    xd = {'image':batch_features,'label':batch_labels}
-    return xd 
+    return batch_features,batch_labels
 
 
 # Use the Estimator 'evaluate' method

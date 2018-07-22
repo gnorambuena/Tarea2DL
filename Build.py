@@ -90,6 +90,8 @@ labels_test = []
 with open("classes.txt", "r") as file:
     for en in enumerate(file.readlines()):
         k, s = en
+        if k == 10:
+            break
         print("File: ", k)
         s = s[:-1]
         #ftrain,ftest = preprocess(pathname,s)
